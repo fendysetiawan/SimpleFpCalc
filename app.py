@@ -32,6 +32,9 @@ st.markdown("**Seismic Design Force (Fp) Calculator for Partition Walls**")
 st.markdown("Based on **ASCE/SEI 7-22**, Chapter 13")
 st.markdown('</div>', unsafe_allow_html=True)
 
+# Toggle for showing detailed information
+show_details = st.toggle("Show detailed information", value=False)
+
 # Geocode address and fetch SDS functions
 @st.cache_data(show_spinner=False)
 def geocode(addr: str):
@@ -86,7 +89,7 @@ if location:
         tooltip = folium.Tooltip(f"<strong>Building Location</strong><br>"
                                  f"Lat: {lat:.6f}<br>Lon: {lon:.6f}", parse_html=True)
         folium.Marker([lat, lon], tooltip=tooltip, icon=folium.Icon(icon="building", prefix="fa")).add_to(m)
-        st_folium(m, width=400, height=210)
+        st_folium(m, width=400, height=220)
     
 else:
     if address:
@@ -105,10 +108,14 @@ if "Office" in occupancy:
     risk_category = "II"
     Ie = 1.0
     Ip = 1.0
+    if show_details:
+        st.caption("Risk Category: **II** | Importance factor: Ie = **1.0**, Ip = **1.0**")
 else:  # Hospital
     risk_category = "IV"
     Ie = 1.5
     Ip = 1.5
+    if show_details:
+        st.caption("Risk Category: **IV** | Importance factor: Ie = **1.5**, Ip = **1.5**")
 
 # Auto-fetch SDS when address and occupancy are available
 SDS = None
@@ -126,7 +133,8 @@ if lat is not None and lon is not None:
             st.session_state.sds_value = SDS
             st.session_state.sds_location = f"{lat:.6f}, {lon:.6f}"
             st.session_state.sds_params = current_params
-            # st.caption(f"SDS = **{SDS:.3f} g**")
+            if show_details:
+                st.caption(f"SDS = **{SDS:.3f} g**")
         except Exception as e:
             st.error(f"⚠️ Error fetching SDS: {e}")
 
@@ -152,10 +160,12 @@ sfrs_mapping = {
 selected_sfrs = sfrs_mapping[building_type]
 if selected_sfrs:
     R, Omega_0 = get_sfrs_factors(sfrs_data, selected_sfrs)
-    # st.caption(f"SFRS: **{selected_sfrs}** | R = **{R}**, Ω₀ = **{Omega_0}**")
+    if show_details:
+        st.caption(f"SFRS: **{selected_sfrs}** | R = **{R}**, Ω₀ = **{Omega_0}**")
 else:
     R, Omega_0 = 0., 0.
-    # st.caption("Using default values: Rmu = **1.3**")
+    if show_details:
+        st.caption("Using default values: Rμ = **1.3**")
 
 # Number of floors
 num_floors = st.number_input(
@@ -172,7 +182,8 @@ else:  # Hospital
     floor_height = 16  # feet
 
 h = num_floors * floor_height
-# st.caption(f"Building height (h): **{h} ft** ({num_floors} floors × {floor_height} ft/floor)")
+if show_details:
+    st.caption(f"Building height (h): **{h} ft** ({num_floors} floors × {floor_height} ft/floor)")
 
 # Highest floor for partition installation
 highest_floor = st.number_input(
@@ -184,7 +195,8 @@ highest_floor = st.number_input(
 
 # Calculate z (attachment height)
 z = highest_floor * floor_height
-# st.caption(f"Attachment height (z): **{z} ft** (installation floor)")
+if show_details:
+    st.caption(f"Attachment height (z): **{z} ft** (installation floor)")
 
 # Partition wall height
 partition_height = st.selectbox(
@@ -199,7 +211,8 @@ if "Less than or equal to 9 feet" in partition_height:
 else:
     component_name = "1b. Interior nonstructural walls and partitions: Light frame > 9 ft in height"
 
-# st.caption(f"Component: **{component_name}**")
+if show_details:
+    st.caption(f"Component: **{component_name}**")
 
 # Results Section
 if SDS is not None:
