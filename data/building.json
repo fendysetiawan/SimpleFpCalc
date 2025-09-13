@@ -1,0 +1,26 @@
+[
+  {
+    "SFRS": "B3. Building frame system: Steel ordinary concentrically braced frames",
+    "R": 3.25,
+    "Omega": 2.0,
+    "Cd": 3.25
+  },
+  {
+    "SFRS": "A3. Bearing wall system: Ordinary reinforced concrete shear walls",
+    "R": 4.0,
+    "Omega": 2.5,
+    "Cd": 4.0
+  },
+  {
+    "SFRS": "A10. Bearing wall system: Ordinary reinforced masonry shear walls",
+    "R": 2.0,
+    "Omega": 2.5,
+    "Cd": 1.75
+  },
+  {
+    "SFRS": "A16. Bearing wall system: Light-frame (wood) walls sheathed with wood structural panels rated for shear resistance",
+    "R": 6.5,
+    "Omega": 3.0,
+    "Cd": 4.0
+  }
+]

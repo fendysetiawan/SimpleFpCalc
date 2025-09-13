@@ -1,0 +1,16 @@
+[
+  {
+    "Component": "1a. Interior nonstructural walls and partitions: Light frame <= 9 ft in height",
+    "CAR_below": 1.0,
+    "CAR_above": 1.0,
+    "Rpo": 1.5,
+    "Omega": 2.0
+  },
+  {
+    "Component": "1b. Interior nonstructural walls and partitions: Light frame > 9 ft in height",
+    "CAR_below": 1.4,
+    "CAR_above": 1.4,
+    "Rpo": 1.5,
+    "Omega": 2.0
+  }
+]
