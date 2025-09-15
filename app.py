@@ -12,6 +12,25 @@ from fpcalc import (
 
 st.set_page_config(page_title="Simple FpCalc", layout="centered", initial_sidebar_state="collapsed")
 
+st.markdown("""
+<style>
+    /* Reduce line spacing in calculation details */
+    .stExpander .stMarkdown p {
+        margin-bottom: 0.5rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    .stExpander .stMarkdown {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Reduce spacing in expander content */
+    .stExpander .element-container {
+        margin-bottom: 0.5rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Authentication
 login_ui()
 logout_ui()
