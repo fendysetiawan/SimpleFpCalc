@@ -220,8 +220,8 @@ if SDS is not None:
     st.markdown("#### ✅ Results")
     
     # Get component factors
-    location_type = "Supported Above Grade" if z > 0 else "Supported At or Below Grade"
-    CAR, Rpo = get_component_factors(arch_components, component_name, location_type)
+    component_location = "Supported Above Grade" if z > 0 else "Supported At or Below Grade"
+    CAR, Rpo = get_component_factors(arch_components, component_name, component_location)
     
     # Calculate approximate period (Ta)
     structure_type = "All other structural systems"
