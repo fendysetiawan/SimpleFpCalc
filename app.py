@@ -35,6 +35,34 @@ st.markdown("""
 login_ui()
 logout_ui()
 
+# Rate limiting for Nominatim API
+class RateLimitedGeocoder:
+    def __init__(self):
+        self.last_request_time = 0
+        self.min_interval = 1.0  # 1 second minimum between requests
+    
+    def geocode_with_rate_limit(self, address):
+        """Geocode address with rate limiting to comply with Nominatim policy"""
+        current_time = time.time()
+        time_since_last = current_time - self.last_request_time
+        
+        if time_since_last < self.min_interval:
+            sleep_time = self.min_interval - time_since_last
+            time.sleep(sleep_time)
+        
+        try:
+            geolocator = Nominatim(user_agent="FpCalc")
+            result = geolocator.geocode(address, timeout=10)
+            self.last_request_time = time.time()
+            return result
+        except Exception as e:
+            # Log the error but don't show it to user to avoid spam
+            st.warning("Geocoding service temporarily unavailable. Please use manual coordinates or try again later.")
+            return None
+
+# Initialize rate-limited geocoder
+rate_limited_geocoder = RateLimitedGeocoder()
+
 # Load Data
 def load_json(file):
     with open(file, "r") as f:
@@ -84,24 +112,32 @@ if 'sds_params' not in st.session_state:
     st.session_state.sds_params = None
 
 # Building Address
-default_address = "601 12th Street, Oakland 94607"
+default_lat, default_lon = 37.788116, -122.391154
+default_address = "375 Beale St, San Francisco, CA 94105"
+default_formatted_address = "The Bay Area Metro Center, 375, Beale Street, Rincon Hill, South of Market, San Francisco, California, 94105, United States"
+
+# Pre-cached default location to avoid API calls
+default_location_cache = {
+    "address": default_address,
+    "latitude": default_lat,
+    "longitude": default_lon,
+    "formatted_address": default_formatted_address
+}
+
 address = st.text_input(
     "Building address:",
     value=default_address,
-    placeholder="e.g., 601 12th Street, Oakland 94607"
+    placeholder=default_address
 )
 
-# Geocode address and auto-fetch SDS
-location = geocode(address.strip())
-if location:
-    lat, lon = location.latitude, location.longitude
-    
-    # Create two columns for location info and map
-    col_info, col_map = st.columns([1, 1.5])
-    
+col_info, col_map = st.columns([1, 1.5])
+
+# Check if it's the default address and use cached geocode address
+if address.strip() == default_address:
+    # Use pre-cached default location
     with col_info:
-        st.info(f"🔍 **{location.address}**\n\nLatitude: {lat:.6f} \n\nLongitude: {lon:.6f}")
-    
+        lat, lon = default_location_cache["latitude"], default_location_cache["longitude"]
+        st.info(f"🔍 **{default_location_cache['formatted_address']}**\n\nLatitude: {lat:.6f} \n\nLongitude: {lon:.6f}")
     with col_map:
         # Map display
         m = folium.Map(location=[lat, lon], zoom_start=16)
@@ -109,11 +145,25 @@ if location:
                                  f"Lat: {lat:.6f}<br>Lon: {lon:.6f}", parse_html=True)
         folium.Marker([lat, lon], tooltip=tooltip, icon=folium.Icon(icon="building", prefix="fa")).add_to(m)
         st_folium(m, width=400, height=220)
-    
 else:
-    if address:
-        st.warning("⚠️ Unable to geocode that address. Please try refining it.")
-    lat, lon = None, None
+    # Use geocoding API for other addresses
+    location = geocode(address.strip())
+    if location:
+        with col_info:
+            lat, lon = location.latitude, location.longitude
+            st.info(f"🔍 **{location.address}**\n\nLatitude: {lat:.6f} \n\nLongitude: {lon:.6f}")
+            st.caption("Geocoding by [OpenStreetMap](https://www.openstreetmap.org/) via Nominatim")
+        with col_map:
+            # Map display
+            m = folium.Map(location=[lat, lon], zoom_start=16)
+            tooltip = folium.Tooltip(f"<strong>Building Location</strong><br>"
+                                    f"Lat: {lat:.6f}<br>Lon: {lon:.6f}", parse_html=True)
+            folium.Marker([lat, lon], tooltip=tooltip, icon=folium.Icon(icon="building", prefix="fa")).add_to(m)
+            st_folium(m, width=400, height=220)
+    else:
+        if address:
+            st.warning("⚠️ Unable to geocode that address. Try refining it or use latitude longitude coordinates.")
+        lat, lon = None, None
 
 # Building Occupancy
 occupancy = st.selectbox(
