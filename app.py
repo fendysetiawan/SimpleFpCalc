@@ -1,7 +1,9 @@
 import streamlit as st
 import requests
 import json
+import time
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderUnavailable
 from streamlit_folium import st_folium
 import folium
 from auth import login_ui, logout_ui
@@ -51,13 +53,15 @@ class RateLimitedGeocoder:
             time.sleep(sleep_time)
         
         try:
-            geolocator = Nominatim(user_agent="FpCalc")
+            geolocator = Nominatim(user_agent="SimpleFpCalc")
             result = geolocator.geocode(address, timeout=10)
             self.last_request_time = time.time()
             return result
+        except GeocoderUnavailable:
+            st.warning("⚠️ Geocoding service is currently unavailable. Please use manual coordinates or try again later.")
+            return None
         except Exception as e:
-            # Log the error but don't show it to user to avoid spam
-            st.warning("Geocoding service temporarily unavailable. Please use manual coordinates or try again later.")
+            st.warning("⚠️ Geocoding service is temporarily unavailable. Please use manual coordinates or try again later.")
             return None
 
 # Initialize rate-limited geocoder
@@ -83,12 +87,11 @@ st.markdown('</div>', unsafe_allow_html=True)
 show_details = st.toggle("Show detailed information", value=False)
 
 # Geocode address and fetch SDS functions
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)  # Cache for 1 hour to prevent repeated queries
 def geocode(addr: str):
     if not addr:
         return None
-    geolocator = Nominatim(user_agent="SimpleFpCalc")
-    return geolocator.geocode(addr)
+    return rate_limited_geocoder.geocode_with_rate_limit(addr)
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def fetch_sds_cached(lat, lon, risk_category, site_class="Default"):
